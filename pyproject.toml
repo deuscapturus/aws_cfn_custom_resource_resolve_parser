@@ -1,7 +1,7 @@
 github_url = "https://github.com/EWS-Network/aws_cfn_custom_resource_resolve_parser"
 
 [tool.tbump.version]
-current = "0.0.1"
+current = "0.1.0"
 
 regex = '''
   (?P<major>\d+)
