@@ -18,7 +18,7 @@ try:
         readme = readme_file.read()
         readme = REF_REGX.sub("", readme)
 except FileNotFoundError:
-    readme = "ECS ComposeX"
+    readme = "AWS CFN Custom resource Resolve Parser"
 
 try:
     with open(f"{DIR_HERE}/HISTORY.rst", encoding="utf-8") as history_file:
@@ -39,6 +39,8 @@ try:
 except FileNotFoundError:
     print("Failed to load dev requirements. Skipping")
 
+setup_requirements = []
+
 setup(
     author="John Preston",
     author_email="john@ews-network.net",
@@ -57,8 +59,9 @@ setup(
     ],
     description="Small lib to parse and retrieve secret from AWS Secrets manager using the CFN resolve format string",
     install_requires=requirements,
-    license="Apache Software License 2.0",
-    long_description=readme + "\n\n" + history,
+    license="MPL-2.0",
+    long_description=readme,
+    long_description_content_type="text/x-rst",
     include_package_data=True,
     keywords="aws_cfn_custom_resource_resolve_parser",
     name="aws_cfn_custom_resource_resolve_parser",
