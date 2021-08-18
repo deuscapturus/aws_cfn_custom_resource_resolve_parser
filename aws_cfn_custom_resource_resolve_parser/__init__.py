@@ -4,12 +4,12 @@
 
 """Top-level package for AWS CFN Custom resource Resolve parser."""
 
-import re
-import json
 import base64
+import json
+import re
+
 from boto3.session import Session
 from botocore.exceptions import ClientError
-
 
 __author__ = """John Preston"""
 __email__ = "john@ews-network.net"
@@ -81,7 +81,6 @@ def parse_secret_resolve_string(resolve_str):
         raise ValueError(
             "Unable to define secret ARN nor secret name from", resolve_str
         )
-
     if parts:
         key = parts.group("secret_key")
         stage = parts.group("version")
@@ -123,11 +122,7 @@ def retrieve_secret(secret, key=None, stage=None, client=None, session=None):
         elif key and not keypresent(key, res):
             raise KeyError(f"Secret {secret} does not have a key {key}")
         return res
-    except (
-        client.exceptions.ResourceNotFoundException,
-        client.exceptions.ResourceNotFoundException,
-    ) as error:
-        print(f"Failed to find or decrypt secret {secret}")
+    except client.exceptions as error:
         print(error)
         raise
     except ClientError as error:

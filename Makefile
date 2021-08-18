@@ -85,4 +85,6 @@ install: clean ## install the package to the active Python's site-packages
 	python setup.py install
 
 conform	: ## Conform to a standard of coding syntax
+	isort --profile black aws_cfn_custom_resource_resolve_parser
 	black aws_cfn_custom_resource_resolve_parser tests
+	find aws_cfn_custom_resource_resolve_parser -name "*.json" -type f  -exec sed -i '1s/^\xEF\xBB\xBF//' {} +
