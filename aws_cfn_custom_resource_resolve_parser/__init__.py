@@ -16,12 +16,17 @@ __email__ = "john@ews-network.net"
 __version__ = "0.1.0"
 
 
-SECRET_REGEXP = re.compile(
-    r"^(?:{{)resolve:secretsmanager:"
-    r"(?P<secret>(?:arn:aws:secretsmanager:[a-z0-9-]+:\d{12}:secret:)?"
-    r"(?:[\S+][^:}]+)|[\S+][^:}]+)"
-    r"(?::((?:SecretString:)(?P<key>[a-zA-Z0-9-_.][^:}]+))"
-    r"(:(?P<stage>[A-Z]+))?)?(?:}})$"
+SECRET_ARN_REGEXP = re.compile(
+    r"(?:{{resolve:secretsmanager:)"
+    r"(?P<arn>arn:(?P<partition>aws(?:-[a-z]+)?):secretsmanager:(?P<region>[a-z0-9-]+):"
+    r"(?P<account_id>\d{12}):"
+    r"(?:secret:(?P<secret_id>[a-z0-9A-Z-_./]+)))"
+    r"(?P<extra>(?::SecretString:(?P<secret_key>[a-z0-9A-Z-_./]+))(?::(?P<version>[a-z0-9A-Z-]+)?)?)?(?:}})"
+)
+
+SECRET_NAME_REGEXP = re.compile(
+    r"(?:{{resolve:secretsmanager:)(?P<name>[a-z0-9A-Z-_./]+)"
+    r"(?P<extra>(?::SecretString:(?P<secret_key>[a-z0-9A-Z-_./]+))(?:(::)(?P<version>[a-z0-9A-Z-]+)?)?)?(?:}})"
 )
 
 
@@ -59,12 +64,27 @@ def parse_secret_resolve_string(resolve_str):
     :return: tuple of the secret, key and stage.
     :rtype: tuple
     """
-    parts = SECRET_REGEXP.match(resolve_str)
-    secret = parts.group("secret")
-    if not secret:
-        raise ValueError("Unable to find the secret name or ARN in", resolve_str)
-    key = parts.group("key")
-    stage = parts.group("stage")
+    secret = None
+    key = None
+    stage = None
+    if SECRET_ARN_REGEXP.match(resolve_str):
+        parts = SECRET_ARN_REGEXP.match(resolve_str)
+        secret = parts.group("arn")
+        if not secret:
+            raise ValueError("Unable to find the secret ARN in", resolve_str)
+        key = parts.group("secret_key")
+        stage = parts.group("version")
+    elif SECRET_NAME_REGEXP.match(resolve_str):
+        parts = SECRET_NAME_REGEXP.match(resolve_str)
+        secret = parts.group("name")
+    else:
+        raise ValueError(
+            "Unable to define secret ARN nor secret name from", resolve_str
+        )
+
+    if parts:
+        key = parts.group("secret_key")
+        stage = parts.group("version")
 
     return secret, key, stage
 
