@@ -110,8 +110,13 @@ def retrieve_secret(secret, key=None, version_stage=None, version_id=None, clien
     elif not client and not session:
         client = Session().client("secretsmanager")
     try:
+        args = {}
+        if version_id: args['VersionId'] = version_id
+        if version_stage: args['VersionStage'] = version_stage
+
         get_secret_value_response = client.get_secret_value(
-            SecretId=secret, VersionId=version_id, VersionStage=version_stage
+            SecretId=secret,
+            **args
         )
         if keyisset("SecretString", get_secret_value_response):
             res = json.loads(get_secret_value_response["SecretString"])
