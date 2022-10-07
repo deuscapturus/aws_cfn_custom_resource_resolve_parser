@@ -19,13 +19,15 @@ jobs:
         run: poetry install
       - name: Build
         run: poetry build
-      - run: ls -l
       - name: Get wheel file
-        id: filename
-        run: ls ./dist/*.whl
-      - name: Get version
-        id: version
-        run: echo "${{ steps.filename.outputs.stdout }}" | awk -F "-" '{print $2}'
+        id: wheel
+        run: |
+          filepath=`ls ./dist/*.whl`
+          filename=`basename $filepath`
+          version=`echo $filename | awk -F "-" '{print $2}'`
+          echo ::set-output name=filepath::$filepath
+          echo ::set-output name=filename::$filename
+          echo ::set-output name=version::$version
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -33,7 +35,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.version.outputs.stdout }}
+          release_name: Release ${{ steps.wheel.outputs.version }}
           draft: false
           prerelease: false
       - name: Upload Release Asset
@@ -43,6 +45,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: ./dist/*.whl
-          asset_name: aws_cfn_custom_resource_resolve_parser-py3-none-any.whl
+          asset_path: ${{ steps.wheel.outputs.filepath }}
+          asset_name: ${{ steps.wheel.outputs.filename }}
           asset_content_type: application/zip
