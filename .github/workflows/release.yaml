@@ -3,7 +3,6 @@ on: ['push']
 jobs:
   release:
     name: Release
-    needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
