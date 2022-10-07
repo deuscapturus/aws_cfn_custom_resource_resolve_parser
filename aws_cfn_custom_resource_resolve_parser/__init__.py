@@ -21,12 +21,12 @@ SECRET_ARN_REGEXP = re.compile(
     r"(?P<arn>arn:(?P<partition>aws(?:-[a-z]+)?):secretsmanager:(?P<region>[a-z0-9-]+):"
     r"(?P<account_id>\d{12}):"
     r"(?:secret:(?P<secret_id>[a-z0-9A-Z-_./]+)))"
-    r"(?P<extra>(?::SecretString:(?P<secret_key>[a-z0-9A-Z-_./]+))(?::(?P<version>[a-z0-9A-Z-]+)?)?)?(?:}})"
-)
+    r"(?P<extra>(?::SecretString:(?P<secret_key>[a-z0-9A-Z-_./]+)?)"
+    r"(?::(?P<version_stage>[a-z0-9A-Z-]+)?)?(?::(?P<version_id>[a-z0-9A-Z-]+)?)?)?:?(?:}})")
 
 SECRET_NAME_REGEXP = re.compile(
     r"(?:{{resolve:secretsmanager:)(?P<name>[a-z0-9A-Z-_./]+)"
-    r"(?P<extra>(?::SecretString:(?P<secret_key>[a-z0-9A-Z-_./]+))(?:(::)(?P<version>[a-z0-9A-Z-]+)?)?)?(?:}})"
+    r"(?P<extra>(?::SecretString:(?P<secret_key>[a-z0-9A-Z-_./]+))(?:(::)(?P<version_stage>[a-z0-9A-Z-]+)?)?)?(?:}})"
 )
 
 
@@ -67,13 +67,12 @@ def parse_secret_resolve_string(resolve_str):
     secret = None
     key = None
     stage = None
+    id = None
     if SECRET_ARN_REGEXP.match(resolve_str):
         parts = SECRET_ARN_REGEXP.match(resolve_str)
         secret = parts.group("arn")
         if not secret:
             raise ValueError("Unable to find the secret ARN in", resolve_str)
-        key = parts.group("secret_key")
-        stage = parts.group("version")
     elif SECRET_NAME_REGEXP.match(resolve_str):
         parts = SECRET_NAME_REGEXP.match(resolve_str)
         secret = parts.group("name")
@@ -82,13 +81,16 @@ def parse_secret_resolve_string(resolve_str):
             "Unable to define secret ARN nor secret name from", resolve_str
         )
     if parts:
-        key = parts.group("secret_key")
-        stage = parts.group("version")
+        parts_dict = parts.groupdict()
+      
+        key = parts_dict.get("secret_key")
+        stage = parts_dict.get("version_stage")
+        id = parts_dict.get("version_id")
 
-    return secret, key, stage
+    return secret, key, stage, id
 
 
-def retrieve_secret(secret, key=None, stage=None, client=None, session=None):
+def retrieve_secret(secret, key=None, version_stage=None, version_id=None, client=None, session=None):
     """
     Function to retrieve the secret. If key is provided, attempts to return only the key value.
     If stage is provided, retrieves the secret for given stage.
@@ -108,8 +110,13 @@ def retrieve_secret(secret, key=None, stage=None, client=None, session=None):
     elif not client and not session:
         client = Session().client("secretsmanager")
     try:
+        args = {}
+        if version_id: args['VersionId'] = version_id
+        if version_stage: args['VersionStage'] = version_stage
+
         get_secret_value_response = client.get_secret_value(
-            SecretId=secret, VersionStage="AWSCURRENT" if not stage else stage
+            SecretId=secret,
+            **args
         )
         if keyisset("SecretString", get_secret_value_response):
             res = json.loads(get_secret_value_response["SecretString"])
@@ -138,5 +145,5 @@ def handle(resolve_str):
     :return:
     """
     parts = parse_secret_resolve_string(resolve_str)
-    secret = retrieve_secret(parts[0], parts[1], parts[2])
+    secret = retrieve_secret(parts[0], parts[1], parts[2], parts[3])
     return secret
