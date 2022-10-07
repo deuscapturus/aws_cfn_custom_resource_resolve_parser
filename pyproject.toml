@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aws_cfn_custom_resource_resolve_parser"
-version = "0.2.0"
+version = "0.3.0"
 description = "AWS CFN Custom Resource parser for dynamic values"
 authors = ["John Preston <john@ews-network.net>"]
 license = "MPL-2.0"
@@ -54,7 +54,7 @@ known_first_party = "kelvin"
 github_url = "https://github.com/EWS-Network/aws_cfn_custom_resource_resolve_parser"
 
 [tool.tbump.version]
-current = "0.2.0"
+current = "0.3.0"
 
 regex = '''
   (?P<major>\d+)
