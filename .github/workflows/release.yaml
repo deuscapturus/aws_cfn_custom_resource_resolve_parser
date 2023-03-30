@@ -1,5 +1,5 @@
 name: Python Build, Test and maybe Publish
-on: ['push']
+on: ['push', 'workflow_dispatch']
 jobs:
   release:
     name: Release
@@ -12,7 +12,7 @@ jobs:
         with:
           python-version: '3.10'
       - run: sudo apt-get update
-      - run: sudo apt-get install libxml2-dev libxslt1-dev python-dev
+      - run: sudo apt-get install libxml2-dev libxslt1-dev python3-dev python3-pip
       - name: Setup Poetry
         run: pip install poetry
       - name: Install
